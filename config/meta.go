@@ -5,14 +5,21 @@ import (
 )
 
 type ApplicationType string
+type Env string
 
 const (
 	KAFKA_PRODUCER ApplicationType = "kafka-producer"
 	KAFKA_CONSUMER ApplicationType = "kafka-consumer"
 )
 
-type Meta struct {
-	AppType ApplicationType `json:"type"`
+const (
+	DEV  Env = "dev"
+	PROD Env = "prod"
+)
+
+type AppMeta struct {
+	Type ApplicationType `json:"type"`
+	Env  Env             `json:"env"`
 }
 
 func GetAppType() ApplicationType {
@@ -25,8 +32,17 @@ func GetAppType() ApplicationType {
 	panic("APP_TYPE is not set")
 }
 
-func NewMeta() *Meta {
-	return &Meta{
-		AppType: GetAppType(),
+func GetEnv() Env {
+	if os.Getenv("ENV") == "prod" {
+		return PROD
+	}
+
+	return DEV
+}
+
+func NewAppMeta() *AppMeta {
+	return &AppMeta{
+		Type: GetAppType(),
+		Env:  GetEnv(),
 	}
 }

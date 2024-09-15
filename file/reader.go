@@ -2,22 +2,27 @@ package file
 
 import (
 	"bufio"
-	"log"
 	"os"
+
+	"go.uber.org/zap"
 )
 
 type FileReader struct {
 	FilePath string
+	logger   *zap.Logger
 }
 
-func NewFileReader(filePath string) *FileReader {
-	return &FileReader{FilePath: filePath}
+func NewFileReader(filePath string, logger *zap.Logger) *FileReader {
+	return &FileReader{
+		FilePath: filePath,
+		logger:   logger,
+	}
 }
 
 func (fr *FileReader) ReadLines() ([]string, error) {
 	file, err := os.Open(fr.FilePath)
 	if err != nil {
-		log.Fatalf("Failed to open file: %s", err)
+		fr.logger.Fatal("Failed to open file: %s", zap.Any("err", err))
 		return nil, err
 	}
 	defer file.Close()
@@ -29,7 +34,7 @@ func (fr *FileReader) ReadLines() ([]string, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatalf("Error reading file: %s", err)
+		fr.logger.Fatal("Error reading file: %s", zap.Any("err", err))
 		return nil, err
 	}
 
