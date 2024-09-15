@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"kong/config"
 	"kong/models"
 	"net/url"
 	"os"
@@ -18,13 +19,17 @@ import (
 	"go.uber.org/zap"
 )
 
-type ElasticIngestor struct{}
-
-func NewElasticIngestor() *ElasticIngestor {
-	return &ElasticIngestor{}
+type KafkaConsumerApp struct {
+	AppMeta   *config.AppMeta
+	AppConfig *config.KafkaProducerAppConfig
+	Logger    *zap.Logger
 }
 
-func (ei *ElasticIngestor) Ingest() {
+func NewKafkaConsumerApp() *KafkaConsumerApp {
+	return &KafkaConsumerApp{}
+}
+
+func (ei *KafkaConsumerApp) Ingest() {
 	// Ingest data into ElasticSearch
 	logger, err := zap.NewProduction()
 	if err != nil {

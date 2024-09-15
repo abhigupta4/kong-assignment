@@ -15,7 +15,7 @@ type KafkaProducerApp struct {
 	AppConfig    *config.KafkaProducerAppConfig
 	Logger       *zap.Logger
 	LogProcessor *processor.LogProcessor
-	KafkaClient  *kafka.KafkaClient
+	KafkaClient  *kafka.KafkaProducerClient
 	FileReader   *file.FileReader
 }
 
@@ -24,7 +24,7 @@ func NewKafkaProducerApp(
 	appConfig *config.KafkaProducerAppConfig,
 	logger *zap.Logger,
 	fileReader *file.FileReader,
-	kafkaClient *kafka.KafkaClient,
+	kafkaClient *kafka.KafkaProducerClient,
 	processor *processor.LogProcessor,
 ) KafkaProducerApp {
 	return KafkaProducerApp{

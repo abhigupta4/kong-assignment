@@ -8,14 +8,14 @@ import (
 	"go.uber.org/zap"
 )
 
-type KafkaClient struct {
+type KafkaProducerClient struct {
 	Logger        *zap.Logger
 	Producer      *kafka.Producer
 	Topic         string
 	FlushInterval int
 }
 
-func NewKafkaClient(config config.KafkaProducerConfig, logger *zap.Logger) (*KafkaClient, error) {
+func NewKafkaProducerClient(config config.KafkaProducerConfig, logger *zap.Logger) (*KafkaProducerClient, error) {
 	producer, err := kafka.NewProducer(
 		&kafka.ConfigMap{
 			"bootstrap.servers": config.BootstrapServers,
@@ -26,7 +26,7 @@ func NewKafkaClient(config config.KafkaProducerConfig, logger *zap.Logger) (*Kaf
 		return nil, err
 	}
 
-	return &KafkaClient{
+	return &KafkaProducerClient{
 		Logger:        logger,
 		Producer:      producer,
 		Topic:         config.Topic,
@@ -34,7 +34,7 @@ func NewKafkaClient(config config.KafkaProducerConfig, logger *zap.Logger) (*Kaf
 	}, nil
 }
 
-func (kc *KafkaClient) SendMessage(value []byte) error {
+func (kc *KafkaProducerClient) SendMessage(value []byte) error {
 	msg := &kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &kc.Topic, Partition: kafka.PartitionAny},
 		Value:          value,
@@ -62,7 +62,7 @@ func (kc *KafkaClient) SendMessage(value []byte) error {
 	return nil
 }
 
-func (kc *KafkaClient) Close() {
+func (kc *KafkaProducerClient) Close() {
 	kc.Producer.Flush(kc.FlushInterval)
 	kc.Producer.Close()
 }

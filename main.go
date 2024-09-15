@@ -30,7 +30,7 @@ func initializeKafkaProducer(appMeta *config.AppMeta) app.KafkaProducerApp {
 
 	config := config.NewKafkaProducerAppConfig(appMeta)
 	fileReader := file.NewFileReader(config.FilePath, logger)
-	kafkaClient, err := kafka.NewKafkaClient(config.KafkaProducerConfig, logger)
+	kafkaClient, err := kafka.NewKafkaProducerClient(config.KafkaProducerConfig, logger)
 	if err != nil {
 		panic(err)
 	}
