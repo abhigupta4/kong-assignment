@@ -26,8 +26,8 @@ func NewKafkaProducerApp(
 	fileReader *file.FileReader,
 	kafkaClient *kafka.KafkaProducerClient,
 	processor *processor.LogProcessor,
-) KafkaProducerApp {
-	return KafkaProducerApp{
+) *KafkaProducerApp {
+	return &KafkaProducerApp{
 		AppMeta:      appMeta,
 		AppConfig:    appConfig,
 		Logger:       logger,
@@ -70,4 +70,6 @@ func (kpa *KafkaProducerApp) Run() {
 		}
 		kpa.Logger.Debug("Sent message to Kafka", zap.Any("record", record))
 	}
+
+	kpa.KafkaClient.Producer.Flush(kpa.KafkaClient.FlushInterval)
 }
