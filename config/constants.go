@@ -15,3 +15,5 @@ const CONSUMER_BOOTSTRAP_SERVERS = "localhost:9092"
 
 const ELASTIC_SEARCH_ADDRESS = "http://localhost:9200"
 const ES_INDEX = "cdc"
+
+const RATE = 1000

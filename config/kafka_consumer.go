@@ -3,6 +3,7 @@ package config
 type KafkaConsumerAppConfig struct {
 	KafkaConsumerConfig KafkaConsumerConfig `json:"kafkaConsumerConfig"`
 	ElasticSearchConfig ElasticSearchConfig `json:"elasticSearchConfig"`
+	RateLimiterConfig   RateLimiterConfig   `json:"rateLimiterConfig"`
 }
 
 type KafkaConsumerConfig struct {
@@ -31,6 +32,9 @@ func NewKafkaConsumerAppConfig(appMeta *AppMeta) *KafkaConsumerAppConfig {
 		ElasticSearchConfig: ElasticSearchConfig{
 			Address: ELASTIC_SEARCH_ADDRESS,
 			Index:   ES_INDEX,
+		},
+		RateLimiterConfig: RateLimiterConfig{
+			Rate:           RATE,
 		},
 	}
 }

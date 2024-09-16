@@ -5,6 +5,7 @@ import (
 	"kong/config"
 	"kong/elasticsearch"
 	"kong/kafka"
+	"kong/limiter"
 	"time"
 
 	"go.uber.org/zap"
@@ -22,7 +23,8 @@ func InitializeKafkaConsumer(appMeta *config.AppMeta, logger *zap.Logger) (*app.
 	if err != nil {
 		return nil, err
 	}
-	app := app.NewKafkaConsumerApp(appMeta, config, logger, kafkaClient, elasticSearchClient)
+	rateLimiter := limiter.NewRateLimiter(config.RateLimiterConfig.Rate)
+	app := app.NewKafkaConsumerApp(appMeta, config, logger, kafkaClient, elasticSearchClient, rateLimiter)
 
 	logger.Info("Kafka consumer application initialized")
 	return app, nil

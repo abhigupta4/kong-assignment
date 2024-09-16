@@ -5,6 +5,7 @@ import (
 	"kong/config"
 	"kong/file"
 	"kong/kafka"
+	"kong/limiter"
 	"kong/processor"
 
 	"go.uber.org/zap"
@@ -20,9 +21,9 @@ func InitializeKafkaProducer(appMeta *config.AppMeta, logger *zap.Logger) (*app.
 		return nil, err
 	}
 	processor := processor.NewLogProcessor(logger)
-	app := app.NewKafkaProducerApp(appMeta, config, logger, fileReader, kafkaClient, processor)
+	rateLimiter := limiter.NewRateLimiter(config.RateLimiterConfig.Rate)
+	app := app.NewKafkaProducerApp(appMeta, config, logger, fileReader, kafkaClient, processor, rateLimiter)
 
 	logger.Info("Kafka producer application initialized")
 	return app, nil
 }
-

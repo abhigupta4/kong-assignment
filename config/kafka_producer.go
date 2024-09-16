@@ -3,6 +3,7 @@ package config
 type KafkaProducerAppConfig struct {
 	FilePath            string              `json:"filePath"`
 	KafkaProducerConfig KafkaProducerConfig `json:"kafkaIngestorConfig"`
+	RateLimiterConfig   RateLimiterConfig   `json:"rateLimiterConfig"`
 }
 
 type KafkaProducerConfig struct {
@@ -19,6 +20,9 @@ func NewKafkaProducerAppConfig(appMeta *AppMeta) *KafkaProducerAppConfig {
 			BootstrapServers:      PRODUCER_BOOTSTRAP_SERVERS,
 			Topic:                 TOPIC,
 			ProducerFlushInterval: PRODUCER_FLUSH_INTERVAL,
+		},
+		RateLimiterConfig: RateLimiterConfig{
+			Rate: RATE,
 		},
 	}
 }

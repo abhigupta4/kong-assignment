@@ -5,6 +5,7 @@ import (
 	"kong/config"
 	"kong/file"
 	"kong/kafka"
+	"kong/limiter"
 	"kong/processor"
 
 	confluentKafka "github.com/confluentinc/confluent-kafka-go/kafka"
@@ -18,6 +19,7 @@ type KafkaProducerApp struct {
 	LogProcessor *processor.LogProcessor
 	KafkaClient  *kafka.KafkaProducerClient
 	FileReader   *file.FileReader
+	RateLimiter  *limiter.RateLimiter
 	StopChan     chan struct{}
 }
 
@@ -28,6 +30,7 @@ func NewKafkaProducerApp(
 	fileReader *file.FileReader,
 	kafkaClient *kafka.KafkaProducerClient,
 	processor *processor.LogProcessor,
+	ratelimiter *limiter.RateLimiter,
 ) *KafkaProducerApp {
 	return &KafkaProducerApp{
 		AppMeta:      appMeta,
@@ -36,11 +39,12 @@ func NewKafkaProducerApp(
 		FileReader:   fileReader,
 		KafkaClient:  kafkaClient,
 		LogProcessor: processor,
+		RateLimiter:  ratelimiter,
 		StopChan:     make(chan struct{}),
 	}
 }
 
-// Ordering matters hence not sending each message as a go routine
+// Ordering matters hence not sending each message as a different go routine
 func (kpa *KafkaProducerApp) Run() error {
 
 	kpa.Logger.Info("Running kafka producer the application")
@@ -68,11 +72,16 @@ func (kpa *KafkaProducerApp) Run() error {
 				continue
 			}
 
-			err = kpa.KafkaClient.SendMessage(jsonBytes, kpa.getKafkaPartition(record.After.Key))
-			if err != nil {
-				kpa.Logger.Error("Failed to send message to Kafka", zap.Any("error", err))
+			if kpa.RateLimiter.Allow() {
+				err = kpa.KafkaClient.SendMessage(jsonBytes, kpa.getKafkaPartition(record.After.Key))
+				if err != nil {
+					kpa.Logger.Error("Failed to send message to Kafka", zap.Any("error", err))
+				}
+				kpa.Logger.Debug("Sent message to Kafka", zap.Any("record", record))
+			} else {
+				kpa.Logger.Warn("Rate limit exceeded, skipping message", zap.Any("record", record))
 			}
-			kpa.Logger.Debug("Sent message to Kafka", zap.Any("record", record))
+
 		}
 	}
 	return nil

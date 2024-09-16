@@ -5,6 +5,7 @@ import (
 	"kong/config"
 	"kong/elasticsearch"
 	"kong/kafka"
+	"kong/limiter"
 	"kong/models"
 
 	confluentKafka "github.com/confluentinc/confluent-kafka-go/kafka"
@@ -17,6 +18,7 @@ type KafkaConsumerApp struct {
 	Logger              *zap.Logger
 	KafkaClient         *kafka.KafkaConsumer
 	ElasticSearchClient *elasticsearch.ElasticSearchClient
+	RateLimiter         *limiter.RateLimiter
 	StopChan            chan struct{}
 }
 
@@ -26,6 +28,7 @@ func NewKafkaConsumerApp(
 	logger *zap.Logger,
 	kafkaClient *kafka.KafkaConsumer,
 	elasticSearchClient *elasticsearch.ElasticSearchClient,
+	rateLimiter *limiter.RateLimiter,
 ) *KafkaConsumerApp {
 	return &KafkaConsumerApp{
 		AppMeta:             appMeta,
@@ -33,6 +36,7 @@ func NewKafkaConsumerApp(
 		Logger:              logger,
 		KafkaClient:         kafkaClient,
 		ElasticSearchClient: elasticSearchClient,
+		RateLimiter:         rateLimiter,
 		StopChan:            make(chan struct{}),
 	}
 }
@@ -55,16 +59,21 @@ func (kca *KafkaConsumerApp) Run() error {
 					kca.Logger.Error("Failed to unmarshal message", zap.Error(err))
 				}
 
-				err = kca.ElasticSearchClient.Write(record, kca.AppConfig.ElasticSearchConfig.Index, record.After.Key)
-				if err != nil {
-					kca.Logger.Error("Failed to write to Elasticsearch", zap.Error(err))
+				if kca.RateLimiter.Allow() {
+					err = kca.ElasticSearchClient.Write(record, kca.AppConfig.ElasticSearchConfig.Index, record.After.Key)
+					if err != nil {
+						kca.Logger.Error("Failed to write to Elasticsearch", zap.Error(err))
+					}
+					kca.Logger.Debug("Successfully written to ElasticSearch")
+				} else {
+					kca.Logger.Warn("Rate limit exceeded, skipping writing to ElasticSearch")
 				}
-				kca.Logger.Debug("Successfully written to ElasticSearch")
 			} else if err.(confluentKafka.Error).Code() != confluentKafka.ErrTimedOut {
 				kca.Logger.Error("Consumer error", zap.Error(err))
 			} else {
 				kca.Logger.Debug("Timed out waiting for message")
 			}
+
 		}
 	}
 }
