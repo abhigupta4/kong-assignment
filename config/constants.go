@@ -3,7 +3,7 @@ package config
 import "time"
 
 // Ideally these config should be injected via environment variables or pulled using a config service
-const TOPIC = "topic"
+const TOPIC = "cdc-events"
 
 const FILE_PATH = "stream.jsonl"
 
