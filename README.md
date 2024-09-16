@@ -87,48 +87,23 @@ to tear down all the services.
 * `stream.jsonl` contains cdc events that need to be ingested
 * `docker-compose.yaml` contains the skeleton services to help you get started
 
-# Kafka Producer Application
+# Kafka Producer and Consumer Applications
 
-This Go application reads data from a file and publishes it to a Kafka topic. The application is designed to be modular
+This repository contains two Go applications:
 
-## Features
-- Reads data from a file (JSONL format or similar).
-- Publishes the data to a Kafka topic.
-- Configurable message batching.
-- Gracefully handles shutdown with signal trapping.
-- Modular and easy to extend.
+1. **Kafka Producer**: Reads data from a file and publishes it to a Kafka topic.
+2. **Kafka Consumer**: Consumes messages from Kafka, processes them, and writes the processed data to Elasticsearch.
 
-## Prerequisites
+## Kafka Producer Application
+
+The Kafka Producer application reads data from a file (e.g., JSONL format or similar) and publishes it to a Kafka topic. It is designed to be modular and scalable.
+
+## Kafka Consumer Application
+
+The Kafka Consumer application consumes messages from a Kafka topic, processes the messages, and writes the processed data to Elasticsearch. It is modular and configurable via environment variables or configuration files.
+
+### Prerequisites
 - [Go](https://golang.org/doc/install) 1.16+ installed.
 - A running Kafka instance (e.g., [Confluent Kafka](https://www.confluent.io/)).
-- A JSONL file (or similar) to be ingested.
-
-## Getting Started
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/abhigupta4/kong-assignment.git
-cd kong-assignment
-
-# Kafka Consumer Application
-
-This Go application consumes messages from Kafka, processes the messages, and writes the processed data to Elasticsearch. The application is designed to be modular and configurable via environment variables or configuration files.
-
-## Features
-- Consumes messages from a Kafka topic.
-- Processes the messages and transforms them as needed.
-- Writes the processed data to an Elasticsearch index.
-- Gracefully handles shutdown with signal trapping.
-- Modular, with easy-to-extend components.
-
-## Prerequisites
-- [Go](https://golang.org/doc/install) 1.16+ installed.
-- A running Kafka instance (e.g., [Confluent Kafka](https://www.confluent.io/)).
-- A running Elasticsearch instance (e.g., [OpenSearch](https://opensearch.org/)).
-
-## Getting Started
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/abhigupta4/kong-assignment.git
-cd kong-assignment
+- A running ElasticSearch instance compatible with opensearch library
+- A file (in JSONL format or similar) to be ingested.

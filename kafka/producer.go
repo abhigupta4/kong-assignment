@@ -34,9 +34,9 @@ func NewKafkaProducerClient(config config.KafkaProducerConfig, logger *zap.Logge
 	}, nil
 }
 
-func (kc *KafkaProducerClient) SendMessage(value []byte) error {
+func (kc *KafkaProducerClient) SendMessage(value []byte, partition int32) error {
 	msg := &kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &kc.Topic, Partition: kafka.PartitionAny},
+		TopicPartition: kafka.TopicPartition{Topic: &kc.Topic, Partition: partition},
 		Value:          value,
 		Timestamp:      time.Now(),
 	}
@@ -62,7 +62,7 @@ func (kc *KafkaProducerClient) SendMessage(value []byte) error {
 	return nil
 }
 
-func (kc *KafkaProducerClient) Close() {
+func (kc *KafkaProducerClient) Shutdown() {
 	kc.Producer.Flush(kc.FlushInterval)
 	kc.Producer.Close()
 }

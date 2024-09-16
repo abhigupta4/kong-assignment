@@ -15,7 +15,7 @@ import (
 
 type ElasticSearchClient struct {
 	Logger *zap.Logger
-	client *opensearch.Client
+	Client *opensearch.Client
 }
 
 func NewElasticSearchClient(config config.ElasticSearchConfig, logger *zap.Logger) (*ElasticSearchClient, error) {
@@ -26,7 +26,7 @@ func NewElasticSearchClient(config config.ElasticSearchConfig, logger *zap.Logge
 		return nil, err
 	}
 	return &ElasticSearchClient{
-		client: client,
+		Client: client,
 		Logger: logger,
 	}, nil
 }
@@ -45,7 +45,7 @@ func (es *ElasticSearchClient) Write(record interface{}, index string, docID str
 		Refresh:    "true",
 	}
 
-	res, err := req.Do(context.Background(), es.client)
+	res, err := req.Do(context.Background(), es.Client)
 	if err != nil {
 		es.Logger.Error("Failed to execute OpenSearch request", zap.Any("error", err))
 		return fmt.Errorf("failed to execute OpenSearch request: %w", err)

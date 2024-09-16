@@ -16,16 +16,10 @@ clean:
 fmt:
 	$(GOCMD) fmt ./...
 
-lint:
-	golangci-lint run
-
-run: build
-	./$(BINARY_NAME)
-
 run-kafka-producer: build
 	APP_TYPE=kafka-producer ./$(BINARY_NAME)
 
 run-kafka-consumer: build
 	APP_TYPE=kafka-consumer ./$(BINARY_NAME)
 
-all: clean fmt lint test build
+all: clean fmt build

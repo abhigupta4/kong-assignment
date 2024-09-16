@@ -1,11 +1,5 @@
 package config
 
-// Ideally these config should be injected via environment variables or pulled using a config service
-const PRODUCER_BOOTSTRAP_SERVERS = "localhost:9092"
-const PRODUCER_TOPIC = "topic"
-const PRODUCER_FLUSH_INTERVAL = 15 * 1000
-const FILE_PATH = "stream2.jsonl"
-
 type KafkaProducerAppConfig struct {
 	FilePath            string              `json:"filePath"`
 	KafkaProducerConfig KafkaProducerConfig `json:"kafkaIngestorConfig"`
@@ -23,7 +17,7 @@ func NewKafkaProducerAppConfig(appMeta *AppMeta) *KafkaProducerAppConfig {
 		FilePath: FILE_PATH,
 		KafkaProducerConfig: KafkaProducerConfig{
 			BootstrapServers:      PRODUCER_BOOTSTRAP_SERVERS,
-			Topic:                 PRODUCER_TOPIC,
+			Topic:                 TOPIC,
 			ProducerFlushInterval: PRODUCER_FLUSH_INTERVAL,
 		},
 	}

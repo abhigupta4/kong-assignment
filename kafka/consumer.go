@@ -39,7 +39,7 @@ func NewKafkaConsumer(config config.KafkaConsumerConfig, logger *zap.Logger, tim
 	}, nil
 }
 
-func (kc *KafkaConsumer) Close() {
+func (kc *KafkaConsumer) Shutdown() {
 	kc.Consumer.Close()
 }
 

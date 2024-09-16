@@ -2,68 +2,66 @@ package main
 
 import (
 	"kong/app"
-	"kong/elasticsearch"
+	"kong/factory"
 	"kong/log"
-	"kong/processor"
-	"time"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"kong/config"
-	"kong/file"
-	kafka "kong/kafka"
+
+	"go.uber.org/zap"
 )
 
 func main() {
 
 	meta := config.NewAppMeta()
+	logger, err := log.NewLogger(meta)
+	if err != nil {
+		panic(err)
+	}
 
-	switch meta.Type {
+	var app app.App
+
+	app, err = initializeApplication(meta, logger)
+	if err != nil {
+		panic(err)
+	}
+
+	if app == nil {
+		panic("Application not initialized")
+	}
+
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
+	logger.Info("Running application...")
+	go func() {
+		if err := app.Run(); err != nil {
+			logger.Error("Application failed", zap.Any("err", err))
+			logger.Info("Shutting down application...")
+			app.Shutdown()
+			return
+		}
+	}()
+
+	receivedSignal := <-signalChan
+	logger.Info("Received shutdown signal, shutting down gracefully...", zap.Any("signal", receivedSignal))
+
+	if err := app.Shutdown(); err != nil {
+		logger.Error("Failed to shutdown application gracefully", zap.Any("err", err))
+		return
+	}
+
+	logger.Info("Application shutdown successfully")
+}
+
+func initializeApplication(appMeta *config.AppMeta, logger *zap.Logger) (app.App, error) {
+	switch appMeta.Type {
 	case config.KAFKA_PRODUCER:
-		app := initializeKafkaProducer(meta)
-		app.Run()
+		return factory.InitializeKafkaProducer(appMeta, logger)
 	case config.KAFKA_CONSUMER:
-		app := initializeKafkaConsumer(meta)
-		app.Run()
+		return factory.InitializeKafkaConsumer(appMeta, logger)
 	}
-}
-
-func initializeKafkaProducer(appMeta *config.AppMeta) *app.KafkaProducerApp {
-	logger, err := log.NewLogger(appMeta)
-	if err != nil {
-		panic(err)
-	}
-	logger.Info("Initializing kafka producer application")
-
-	config := config.NewKafkaProducerAppConfig(appMeta)
-	fileReader := file.NewFileReader(config.FilePath, logger)
-	kafkaClient, err := kafka.NewKafkaProducerClient(config.KafkaProducerConfig, logger)
-	if err != nil {
-		panic(err)
-	}
-	processor := processor.NewLogProcessor(logger)
-	app := app.NewKafkaProducerApp(appMeta, config, logger, fileReader, kafkaClient, processor)
-
-	logger.Info("Kafka producer application initialized")
-	return app
-}
-
-func initializeKafkaConsumer(appMeta *config.AppMeta) *app.KafkaConsumerApp {
-	logger, err := log.NewLogger(appMeta)
-	if err != nil {
-		panic(err)
-	}
-	logger.Info("Initializing kafka consumer application")
-
-	config := config.NewKafkaConsumerAppConfig(appMeta)
-	kafkaClient, err := kafka.NewKafkaConsumer(config.KafkaConsumerConfig, logger, time.Minute*10)
-	if err != nil {
-		panic(err)
-	}
-	elasticSearchClient, err := elasticsearch.NewElasticSearchClient(config.ElasticSearchConfig, logger)
-	if err != nil {
-		panic(err)
-	}
-	app := app.NewKafkaConsumerApp(appMeta, config, logger, kafkaClient, elasticSearchClient)
-
-	logger.Info("Kafka consumer application initialized")
-	return app
+	return nil, nil
 }

@@ -17,8 +17,8 @@ func NewLogProcessor(logger *zap.Logger) *LogProcessor {
 	}
 }
 
-func (lp *LogProcessor) ProcessMessage(line string) (*models.LogRecord, error) {
-	var record models.LogRecord
+func (lp *LogProcessor) ProcessMessage(line string) (*models.Record, error) {
+	var record models.Record
 	if err := json.Unmarshal([]byte(line), &record); err != nil {
 		lp.Logger.Error("Failed to unmarshal JSON: %s", zap.Any("error", err))
 		return nil, err

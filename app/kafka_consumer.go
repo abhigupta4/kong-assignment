@@ -17,6 +17,7 @@ type KafkaConsumerApp struct {
 	Logger              *zap.Logger
 	KafkaClient         *kafka.KafkaConsumer
 	ElasticSearchClient *elasticsearch.ElasticSearchClient
+	StopChan            chan struct{}
 }
 
 func NewKafkaConsumerApp(
@@ -32,31 +33,46 @@ func NewKafkaConsumerApp(
 		Logger:              logger,
 		KafkaClient:         kafkaClient,
 		ElasticSearchClient: elasticSearchClient,
+		StopChan:            make(chan struct{}),
 	}
 }
 
-func (kca *KafkaConsumerApp) Run() {
+func (kca *KafkaConsumerApp) Run() error {
 	kca.Logger.Info("Running kafka consumer application")
 	for {
-		msg, err := kca.KafkaClient.ReadMessage()
-		if err == nil {
-			kca.Logger.Info("Received message from Kafka", zap.String("message", string(msg.Value)))
+		select {
+		case <-kca.StopChan:
+			kca.Logger.Info("Received stop signal, exiting message processing")
+			return nil
+		default:
+			msg, err := kca.KafkaClient.ReadMessage()
+			if err == nil {
+				kca.Logger.Info("Received message from Kafka", zap.String("message", string(msg.Value)))
 
-			var record models.LogRecord
-			err := json.Unmarshal(msg.Value, &record)
-			if err != nil {
-				kca.Logger.Error("Failed to unmarshal message", zap.Error(err))
-			}
+				var record models.Record
+				err := json.Unmarshal(msg.Value, &record)
+				if err != nil {
+					kca.Logger.Error("Failed to unmarshal message", zap.Error(err))
+				}
 
-			err = kca.ElasticSearchClient.Write(record, "kafka-index-1", record.After.Key)
-			if err != nil {
-				kca.Logger.Error("Failed to write to Elasticsearch", zap.Error(err))
+				err = kca.ElasticSearchClient.Write(record, kca.AppConfig.ElasticSearchConfig.Index, record.After.Key)
+				if err != nil {
+					kca.Logger.Error("Failed to write to Elasticsearch", zap.Error(err))
+				}
+				kca.Logger.Debug("Successfully written to ElasticSearch")
+			} else if err.(confluentKafka.Error).Code() != confluentKafka.ErrTimedOut {
+				kca.Logger.Error("Consumer error", zap.Error(err))
+			} else {
+				kca.Logger.Debug("Timed out waiting for message")
 			}
-			kca.Logger.Debug("Successfully written to ElasticSearch")
-		} else if err.(confluentKafka.Error).Code() != confluentKafka.ErrTimedOut {
-			kca.Logger.Error("Consumer error", zap.Error(err))
-		} else {
-			kca.Logger.Debug("Timed out waiting for message")
 		}
 	}
+}
+
+func (kca *KafkaConsumerApp) Shutdown() error {
+	kca.Logger.Info("Stopping Kafka Consumer Application")
+	close(kca.StopChan)
+	kca.KafkaClient.Shutdown()
+
+	return nil
 }
