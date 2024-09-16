@@ -7,6 +7,7 @@ import (
 	"kong/kafka"
 	"kong/limiter"
 	"kong/processor"
+	"kong/retry"
 
 	confluentKafka "github.com/confluentinc/confluent-kafka-go/kafka"
 	"go.uber.org/zap"
@@ -73,7 +74,12 @@ func (kpa *KafkaProducerApp) Run() error {
 			}
 
 			if kpa.RateLimiter.Allow() {
-				err = kpa.KafkaClient.SendMessage(jsonBytes, kpa.getKafkaPartition(record.After.Key))
+				err := retry.RetryWithExponentialBackoff(
+					kpa.AppConfig.RetryConfig.Count,
+					kpa.AppConfig.RetryConfig.Backoff,
+					func() error {
+						return kpa.KafkaClient.SendMessage(jsonBytes, kpa.getKafkaPartition(record.After.Key))
+					})
 				if err != nil {
 					kpa.Logger.Error("Failed to send message to Kafka", zap.Any("error", err))
 				}
@@ -84,6 +90,7 @@ func (kpa *KafkaProducerApp) Run() error {
 
 		}
 	}
+	kpa.KafkaClient.Flush()
 	return nil
 }
 
@@ -95,6 +102,7 @@ func (kpa *KafkaProducerApp) getKafkaPartition(key string) int32 {
 func (kpa *KafkaProducerApp) Shutdown() error {
 	close(kpa.StopChan)
 	kpa.KafkaClient.Shutdown()
+	kpa.RateLimiter.Stop()
 
 	return nil
 }

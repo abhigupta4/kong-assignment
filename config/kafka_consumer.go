@@ -4,6 +4,7 @@ type KafkaConsumerAppConfig struct {
 	KafkaConsumerConfig KafkaConsumerConfig `json:"kafkaConsumerConfig"`
 	ElasticSearchConfig ElasticSearchConfig `json:"elasticSearchConfig"`
 	RateLimiterConfig   RateLimiterConfig   `json:"rateLimiterConfig"`
+	RetryConfig         RetryConfig         `json:"retryConfig"`
 }
 
 type KafkaConsumerConfig struct {
@@ -34,7 +35,11 @@ func NewKafkaConsumerAppConfig(appMeta *AppMeta) *KafkaConsumerAppConfig {
 			Index:   ES_INDEX,
 		},
 		RateLimiterConfig: RateLimiterConfig{
-			Rate:           RATE,
+			Rate: RATE,
+		},
+		RetryConfig: RetryConfig{
+			Count:   RETRY_COUNT,
+			Backoff: RETRY_BACKOFF,
 		},
 	}
 }

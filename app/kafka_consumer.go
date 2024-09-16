@@ -7,6 +7,7 @@ import (
 	"kong/kafka"
 	"kong/limiter"
 	"kong/models"
+	"kong/retry"
 
 	confluentKafka "github.com/confluentinc/confluent-kafka-go/kafka"
 	"go.uber.org/zap"
@@ -60,7 +61,12 @@ func (kca *KafkaConsumerApp) Run() error {
 				}
 
 				if kca.RateLimiter.Allow() {
-					err = kca.ElasticSearchClient.Write(record, kca.AppConfig.ElasticSearchConfig.Index, record.After.Key)
+					err := retry.RetryWithExponentialBackoff(
+						kca.AppConfig.RetryConfig.Count,
+						kca.AppConfig.RetryConfig.Backoff,
+						func() error {
+							return kca.ElasticSearchClient.Write(record, kca.AppConfig.ElasticSearchConfig.Index, record.After.Key)
+						})
 					if err != nil {
 						kca.Logger.Error("Failed to write to Elasticsearch", zap.Error(err))
 					}
@@ -82,6 +88,7 @@ func (kca *KafkaConsumerApp) Shutdown() error {
 	kca.Logger.Info("Stopping Kafka Consumer Application")
 	close(kca.StopChan)
 	kca.KafkaClient.Shutdown()
+	kca.RateLimiter.Stop()
 
 	return nil
 }

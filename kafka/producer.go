@@ -62,6 +62,11 @@ func (kc *KafkaProducerClient) SendMessage(value []byte, partition int32) error 
 	return nil
 }
 
+func (kc *KafkaProducerClient) Flush() {
+	kc.Logger.Info("Flushing remaining messages")
+	kc.Producer.Flush(kc.FlushInterval)
+}
+
 func (kc *KafkaProducerClient) Shutdown() {
 	kc.Producer.Flush(kc.FlushInterval)
 	kc.Producer.Close()

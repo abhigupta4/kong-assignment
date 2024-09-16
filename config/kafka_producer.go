@@ -4,6 +4,7 @@ type KafkaProducerAppConfig struct {
 	FilePath            string              `json:"filePath"`
 	KafkaProducerConfig KafkaProducerConfig `json:"kafkaIngestorConfig"`
 	RateLimiterConfig   RateLimiterConfig   `json:"rateLimiterConfig"`
+	RetryConfig         RetryConfig         `json:"retryConfig"`
 }
 
 type KafkaProducerConfig struct {
@@ -23,6 +24,10 @@ func NewKafkaProducerAppConfig(appMeta *AppMeta) *KafkaProducerAppConfig {
 		},
 		RateLimiterConfig: RateLimiterConfig{
 			Rate: RATE,
+		},
+		RetryConfig: RetryConfig{
+			Count:   RETRY_COUNT,
+			Backoff: RETRY_BACKOFF,
 		},
 	}
 }
