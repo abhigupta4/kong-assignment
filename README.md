@@ -107,3 +107,9 @@ The Kafka Consumer application consumes messages from a Kafka topic, processes t
 - A running Kafka instance (e.g., [Confluent Kafka](https://www.confluent.io/)).
 - A running ElasticSearch instance compatible with opensearch library
 - A file (in JSONL format or similar) to be ingested.
+
+## Running the application
+
+I have created a Makefile for ease of running the application
+1. make run-kafka-producer
+2. make run-kafka-consumer
