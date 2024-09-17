@@ -96,11 +96,11 @@ This repository contains two Go applications:
 
 ## Kafka Producer Application
 
-The Kafka Producer application reads data from a file (e.g., JSONL format or similar) and publishes it to a Kafka topic. It is designed to be modular and scalable.
+The Kafka Producer application reads data from a file (e.g., JSONL format or similar) and publishes it to a Kafka topic.
 
 ## Kafka Consumer Application
 
-The Kafka Consumer application consumes messages from a Kafka topic, processes the messages, and writes the processed data to Elasticsearch. It is modular and configurable via environment variables or configuration files.
+The Kafka Consumer application consumes messages from a Kafka topic, processes the messages, and writes the processed data to Elasticsearch.
 
 ### Prerequisites
 - [Go](https://golang.org/doc/install) 1.16+ installed.
