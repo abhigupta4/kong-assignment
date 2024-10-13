@@ -39,9 +39,6 @@ func main() {
 	logger.Info("Running application...")
 	go func() {
 		if err := app.Run(); err != nil {
-			logger.Error("Application failed", zap.Any("err", err))
-			logger.Info("Shutting down application...")
-			app.Shutdown()
 			doneChan <- err
 			return
 		}
