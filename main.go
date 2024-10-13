@@ -33,6 +33,7 @@ func main() {
 	}
 
 	signalChan := make(chan os.Signal, 1)
+	doneChan := make(chan error, 1) 
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 	logger.Info("Running application...")
@@ -41,12 +42,20 @@ func main() {
 			logger.Error("Application failed", zap.Any("err", err))
 			logger.Info("Shutting down application...")
 			app.Shutdown()
+			doneChan <- err
 			return
 		}
+		doneChan <- nil
 	}()
 
-	receivedSignal := <-signalChan
-	logger.Info("Received shutdown signal, shutting down gracefully...", zap.Any("signal", receivedSignal))
+	select {
+	case receivedSignal := <-signalChan:
+		logger.Info("Received shutdown signal, shutting down gracefully...", zap.Any("signal", receivedSignal))
+	case err := <-doneChan:
+		if err != nil {
+			logger.Error("Application failed, shutting down due to error", zap.Any("err", err))
+		}
+	}
 
 	if err := app.Shutdown(); err != nil {
 		logger.Error("Failed to shutdown application gracefully", zap.Any("err", err))
